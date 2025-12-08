@@ -57,6 +57,12 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        week: {
+          1: "hsl(var(--week-1))",
+          2: "hsl(var(--week-2))",
+          3: "hsl(var(--week-3))",
+          4: "hsl(var(--week-4))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
