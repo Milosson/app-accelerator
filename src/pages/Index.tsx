@@ -1,16 +1,49 @@
 import { useState } from "react";
-import { scheduleData } from "@/data/scheduleData";
+import { useScheduleStorage } from "@/hooks/useScheduleStorage";
 import { Header } from "@/components/Header";
-import { WeekCard } from "@/components/WeekCard";
-import { DayCard } from "@/components/DayCard";
+import { WeekCardEnhanced } from "@/components/WeekCardEnhanced";
+import { DayCardEnhanced } from "@/components/DayCardEnhanced";
 import { KeywordsSection } from "@/components/KeywordsSection";
 import { TipsSection } from "@/components/TipsSection";
-import { Badge } from "@/components/ui/badge";
-import { Target } from "lucide-react";
+import { AddDayDialog } from "@/components/AddDayDialog";
+import { Button } from "@/components/ui/button";
+import { Target, RotateCcw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const Index = () => {
   const [activeWeek, setActiveWeek] = useState(1);
-  const currentWeek = scheduleData.find((w) => w.id === activeWeek)!;
+  const {
+    weeks,
+    addActivity,
+    updateActivity,
+    deleteActivity,
+    addDay,
+    deleteDay,
+    toggleActivityComplete,
+    getProgress,
+    getWeekProgress,
+    updateNotes,
+    getNotes,
+    resetToDefault,
+  } = useScheduleStorage();
+
+  const currentWeek = weeks.find((w) => w.id === activeWeek)!;
+
+  const handleReset = () => {
+    resetToDefault();
+    toast.success("Schemat har återställts till original!");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -20,12 +53,13 @@ const Index = () => {
         {/* Week Selector */}
         <section className="mb-8">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {scheduleData.map((week) => (
-              <WeekCard
+            {weeks.map((week) => (
+              <WeekCardEnhanced
                 key={week.id}
                 week={week}
                 isActive={activeWeek === week.id}
                 onClick={() => setActiveWeek(week.id)}
+                progressPercent={getWeekProgress(week.id)}
               />
             ))}
           </div>
@@ -33,10 +67,32 @@ const Index = () => {
 
         {/* Active Week Content */}
         <section>
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6">
             <h2 className="text-xl md:text-2xl font-bold text-foreground">
               Vecka {currentWeek.id}: {currentWeek.title}
             </h2>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Återställ
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Återställ schemat?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Detta tar bort alla dina ändringar, anteckningar och progress. Schemat återställs till originalversionen.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset}>
+                    Återställ
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           {/* Week Goal */}
@@ -59,13 +115,38 @@ const Index = () => {
           {/* Days Grid */}
           <div className="space-y-3">
             {currentWeek.days.map((day, index) => (
-              <DayCard
-                key={`${currentWeek.id}-${day.day}`}
+              <DayCardEnhanced
+                key={`${currentWeek.id}-${index}-${day.day}`}
                 day={day}
                 weekId={currentWeek.id}
-                index={index}
+                dayIndex={index}
+                progress={getProgress(currentWeek.id, index)}
+                notes={getNotes(currentWeek.id, index)}
+                onToggleActivity={(activityIndex) =>
+                  toggleActivityComplete(currentWeek.id, index, activityIndex)
+                }
+                onUpdateActivity={(activityIndex, newActivity) =>
+                  updateActivity(currentWeek.id, index, activityIndex, newActivity)
+                }
+                onDeleteActivity={(activityIndex) =>
+                  deleteActivity(currentWeek.id, index, activityIndex)
+                }
+                onAddActivity={(activity) =>
+                  addActivity(currentWeek.id, index, activity)
+                }
+                onUpdateNotes={(notes) => updateNotes(currentWeek.id, index, notes)}
+                onDeleteDay={() => deleteDay(currentWeek.id, index)}
               />
             ))}
+            
+            {/* Add Day Button */}
+            <AddDayDialog
+              weekId={currentWeek.id}
+              onAdd={(newDay) => {
+                addDay(currentWeek.id, newDay);
+                toast.success(`${newDay.title} har lagts till!`);
+              }}
+            />
           </div>
 
           {/* Keywords & Replicas */}
