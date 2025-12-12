@@ -6,6 +6,11 @@ import { DayCardEnhanced } from "@/components/DayCardEnhanced";
 import { KeywordsSection } from "@/components/KeywordsSection";
 import { TipsSection } from "@/components/TipsSection";
 import { AddDayDialog } from "@/components/AddDayDialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { AuthDialog } from "@/components/AuthDialog";
+import { GamificationPanel } from "@/components/GamificationPanel";
+import { ExportPanel } from "@/components/ExportPanel";
+import { AIWeekGenerator } from "@/components/AIWeekGenerator";
 import { Button } from "@/components/ui/button";
 import { Target, RotateCcw } from "lucide-react";
 import {
@@ -20,9 +25,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Week } from "@/data/scheduleData";
 
 const Index = () => {
   const [activeWeek, setActiveWeek] = useState(1);
+  const storage = useScheduleStorage();
   const {
     weeks,
     addActivity,
@@ -36,7 +43,14 @@ const Index = () => {
     updateNotes,
     getNotes,
     resetToDefault,
-  } = useScheduleStorage();
+  } = storage;
+
+  const handleAddWeek = (newWeek: Week) => {
+    // Add week to local storage
+    const updatedWeeks = [...weeks, newWeek];
+    localStorage.setItem('studyplan_data', JSON.stringify(updatedWeeks));
+    window.location.reload(); // Refresh to load new data
+  };
 
   const currentWeek = weeks.find((w) => w.id === activeWeek)!;
 
@@ -48,6 +62,18 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-5xl mx-auto px-4 py-8 md:py-12">
+        {/* Top Bar */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <GamificationPanel />
+          </div>
+          <div className="flex items-center gap-2">
+            <ExportPanel weeks={weeks} />
+            <ThemeToggle />
+            <AuthDialog />
+          </div>
+        </div>
+        
         <Header />
 
         {/* Week Selector */}
@@ -62,6 +88,9 @@ const Index = () => {
                 progressPercent={getWeekProgress(week.id)}
               />
             ))}
+          </div>
+          <div className="mt-4">
+            <AIWeekGenerator existingWeeks={weeks} onWeekGenerated={handleAddWeek} />
           </div>
         </section>
 
