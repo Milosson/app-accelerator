@@ -150,6 +150,24 @@ export function useScheduleStorage() {
     );
   };
 
+  const addWeek = (newWeek: Week) => {
+    setWeeks((prev) => [...prev, newWeek]);
+  };
+
+  const deleteWeek = (weekId: number) => {
+    setWeeks((prev) => {
+      const filtered = prev.filter((week) => week.id !== weekId);
+      // Renumber remaining weeks
+      return filtered.map((week, index) => ({
+        ...week,
+        id: index + 1,
+      }));
+    });
+    // Clean up progress and notes for deleted week
+    setProgress((prev) => prev.filter((p) => p.weekId !== weekId));
+    setNotes((prev) => prev.filter((n) => n.weekId !== weekId));
+  };
+
   // Progress Operations
   const toggleActivityComplete = (
     weekId: number,
@@ -254,6 +272,8 @@ export function useScheduleStorage() {
     addDay,
     updateDay,
     deleteDay,
+    addWeek,
+    deleteWeek,
     toggleActivityComplete,
     getProgress,
     getWeekProgress,

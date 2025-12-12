@@ -20,12 +20,46 @@ serve(async (req) => {
 
     console.log('Generating week content for:', prompt);
 
+    // Calculate dates for the new week (starting next Monday)
+    const today = new Date();
+    const daysUntilMonday = (8 - today.getDay()) % 7 || 7;
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() + daysUntilMonday + ((weekNumber - 1) * 7));
+    
+    const formatDate = (date: Date) => {
+      const day = date.getDate();
+      const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+      return `${day} ${months[date.getMonth()]}`;
+    };
+
+    const getDayName = (dayIndex: number) => {
+      const days = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag'];
+      return days[dayIndex];
+    };
+
+    // Generate dates for the week
+    const weekDates: { day: string; date: string }[] = [];
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      weekDates.push({
+        day: getDayName(i),
+        date: formatDate(date)
+      });
+    }
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 4);
+    const dateRange = `${formatDate(startDate)}–${formatDate(endDate)}`;
+
     const systemPrompt = `Du är en expert på att skapa studieplaner för Power Apps och Azure. 
 Generera en detaljerad veckoplan baserat på användarens prompt.
+Använd dessa EXAKTA datum för dagarna:
+${weekDates.map((d, i) => `Dag ${i + 1}: ${d.day}, ${d.date}`).join('\n')}
+
 Svara ENDAST med ett JSON-objekt i detta format (ingen markdown, inga kodblock):
 {
   "title": "Veckans titel",
-  "dateRange": "datum-intervall",
   "goal": "Veckans mål",
   "totalHours": "X h",
   "focus": "Veckans fokus",
@@ -33,8 +67,8 @@ Svara ENDAST med ett JSON-objekt i detta format (ingen markdown, inga kodblock):
   "replicas": ["Replik 1", "Replik 2"],
   "days": [
     {
-      "day": "Måndag",
-      "date": "datum",
+      "day": "${weekDates[0]?.day || 'Måndag'}",
+      "date": "${weekDates[0]?.date || ''}",
       "title": "Dagens titel",
       "duration": "X h",
       "activities": ["Aktivitet 1", "Aktivitet 2"],
@@ -44,11 +78,11 @@ Svara ENDAST med ett JSON-objekt i detta format (ingen markdown, inga kodblock):
     }
   ]
 }
-Inkludera 3-5 dagar beroende på ämnet. Var specifik med YouTube-tutorials och Microsoft Learn-resurser.`;
+Inkludera 3-5 dagar. Var specifik med YouTube-tutorials och Microsoft Learn-resurser.`;
 
     const userPrompt = `Vecka ${weekNumber}: ${prompt}
 ${existingWeeks ? `Befintliga veckor handlar om: ${existingWeeks.map((w: any) => w.title).join(', ')}` : ''}
-Generera en ny vecka som bygger vidare på dessa kunskaper.`;
+Generera en ny vecka som bygger vidare på dessa kunskaper. Använd exakt dessa datum: ${dateRange}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -99,6 +133,9 @@ Generera en ny vecka som bygger vidare på dessa kunskaper.`;
       console.error('Failed to parse AI response:', parseError);
       throw new Error('Failed to parse AI response');
     }
+
+    // Add the calculated dateRange to the response
+    weekData.dateRange = dateRange;
 
     return new Response(JSON.stringify({ week: weekData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
