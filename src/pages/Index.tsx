@@ -37,6 +37,8 @@ const Index = () => {
     deleteActivity,
     addDay,
     deleteDay,
+    addWeek,
+    deleteWeek,
     toggleActivityComplete,
     getProgress,
     getWeekProgress,
@@ -46,10 +48,16 @@ const Index = () => {
   } = storage;
 
   const handleAddWeek = (newWeek: Week) => {
-    // Add week to local storage
-    const updatedWeeks = [...weeks, newWeek];
-    localStorage.setItem('studyplan_data', JSON.stringify(updatedWeeks));
-    window.location.reload(); // Refresh to load new data
+    addWeek(newWeek);
+  };
+
+  const handleDeleteWeek = (weekId: number) => {
+    deleteWeek(weekId);
+    // If deleted week was active, switch to week 1
+    if (activeWeek === weekId) {
+      setActiveWeek(1);
+    }
+    toast.success("Vecka borttagen!");
   };
 
   const currentWeek = weeks.find((w) => w.id === activeWeek)!;
@@ -86,6 +94,8 @@ const Index = () => {
                 isActive={activeWeek === week.id}
                 onClick={() => setActiveWeek(week.id)}
                 progressPercent={getWeekProgress(week.id)}
+                onDelete={() => handleDeleteWeek(week.id)}
+                canDelete={week.id > 4} // Only allow deleting AI-generated weeks (id > 4)
               />
             ))}
           </div>
