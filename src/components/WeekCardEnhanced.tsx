@@ -10,11 +10,15 @@ interface WeekCardEnhancedProps {
   progressPercent: number;
 }
 
-const weekColors = {
+const weekColors: Record<number, string> = {
   1: "week-1",
   2: "week-2",
   3: "week-3",
   4: "week-4",
+};
+
+const getWeekColor = (weekId: number): string => {
+  return weekColors[weekId] || "primary";
 };
 
 export const WeekCardEnhanced = ({
@@ -23,7 +27,9 @@ export const WeekCardEnhanced = ({
   onClick,
   progressPercent,
 }: WeekCardEnhancedProps) => {
-  const colorClass = weekColors[week.id as keyof typeof weekColors];
+  const colorClass = getWeekColor(week.id);
+  const bgClass = weekColors[week.id] ? `${colorClass}-bg` : "bg-primary/10";
+  const accentClass = weekColors[week.id] ? `${colorClass}-accent` : "text-primary";
   const isComplete = progressPercent === 100;
 
   return (
@@ -31,7 +37,7 @@ export const WeekCardEnhanced = ({
       onClick={onClick}
       className={`w-full text-left p-4 md:p-5 rounded-xl transition-all duration-300 border-2 ${
         isActive
-          ? `${colorClass}-bg border-current shadow-hover`
+          ? `${bgClass} border-current shadow-hover`
           : "bg-card border-border hover:border-muted-foreground/30 shadow-card"
       }`}
     >
@@ -39,7 +45,7 @@ export const WeekCardEnhanced = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <span
-              className={`text-xs font-semibold uppercase tracking-wider ${colorClass}-accent`}
+              className={`text-xs font-semibold uppercase tracking-wider ${accentClass}`}
             >
               Vecka {week.id}
             </span>
@@ -69,9 +75,9 @@ export const WeekCardEnhanced = ({
           </span>
         </div>
         <div
-          className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}-bg shrink-0`}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center ${bgClass} shrink-0`}
         >
-          <span className={`font-bold text-lg ${colorClass}-accent`}>
+          <span className={`font-bold text-lg ${accentClass}`}>
             {week.id}
           </span>
         </div>

@@ -41,11 +41,17 @@ interface DayCardEnhancedProps {
   onDeleteDay: () => void;
 }
 
-const weekColors = {
+const weekColors: Record<number, { accent: string; bg: string; border: string }> = {
   1: { accent: "week-1-accent", bg: "week-1-bg", border: "border-[hsl(173,58%,39%)]" },
   2: { accent: "week-2-accent", bg: "week-2-bg", border: "border-[hsl(221,83%,53%)]" },
   3: { accent: "week-3-accent", bg: "week-3-bg", border: "border-[hsl(262,83%,58%)]" },
   4: { accent: "week-4-accent", bg: "week-4-bg", border: "border-[hsl(38,92%,50%)]" },
+};
+
+const defaultColors = { accent: "text-primary", bg: "bg-primary/10", border: "border-primary" };
+
+const getWeekColors = (weekId: number) => {
+  return weekColors[weekId] || defaultColors;
 };
 
 export const DayCardEnhanced = ({
@@ -61,7 +67,7 @@ export const DayCardEnhanced = ({
   onUpdateNotes,
   onDeleteDay,
 }: DayCardEnhancedProps) => {
-  const colors = weekColors[weekId as keyof typeof weekColors];
+  const colors = getWeekColors(weekId);
   const completedCount = progress?.completedActivities.length || 0;
   const totalCount = day.activities.length;
   const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
